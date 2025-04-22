@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"fmt"
+	"strings"
+	"slices"
 )
 
 // All chirps must be no more than 140 characters long
@@ -26,7 +28,7 @@ type RequestBody struct {
 */
 
 type ValidResponse struct {
-	Valid    bool    `json:"valid"`
+	Body    string    `json:"cleaned_body"`
 }
 
 /* If an error occurs, send an appropriate HTTP status code (400) and a json body of this shape:
@@ -73,7 +75,9 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonData, err := json.Marshal(ValidResponse{Valid:true})
+	newBody := cleanBody(reqBody.Body)
+
+	jsonData, err := json.Marshal(ValidResponse{Body: newBody})
 	if err != nil {
 		log.Printf("Error marshaling error response: %s", err)
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
@@ -83,4 +87,17 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(200)
 	w.Write([]byte(jsonData))
+}
+
+func cleanBody(str string) string {
+	words := strings.Fields(str)
+	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
+	for i, word := range words {
+		if slices.Contains(profaneWords, strings.ToLower(word)) {
+			words[i] = "****"
+		}
+	}
+
+	newString := strings.Join(words, " ")
+	return newString
 }
