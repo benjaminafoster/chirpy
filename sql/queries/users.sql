@@ -4,6 +4,6 @@ VALUES (
     gen_random_uuid(),
     NOW(),
     NOW(),
-    email
+    $1
 )
 RETURNING *;
