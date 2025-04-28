@@ -76,12 +76,20 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		UserID: user_id,
 	}
 
-	chirp, err := cfg.DbPtr.CreateChirp(context.Background(), chirpParams)
+	chirpDb, err := cfg.DbPtr.CreateChirp(context.Background(), chirpParams)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Error adding chirp to database", err)
 		return
 	}
 
+	chirp := Chirp{
+		ID: chirpDb.ID,
+		CreatedAt: chirpDb.CreatedAt,
+		UpdatedAt: chirpDb.UpdatedAt,
+		Body: chirpDb.Body,
+		UserID: chirpDb.UserID,
+	}
+	
 	respondWithJSON(w, http.StatusCreated, chirp)
 
 }

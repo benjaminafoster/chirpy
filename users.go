@@ -30,7 +30,7 @@ type UserRequestBody struct {
 	}
 */
 type User struct {
-	Id              uuid.UUID `json:"uuid"`
+	Id              uuid.UUID `json:"id"`
 	Created_At      time.Time `json:"created_at"`
 	Updated_At      time.Time `json:"updated_at"`
 	Email           string    `json:"email"`
