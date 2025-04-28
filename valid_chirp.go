@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"fmt"
-	"strings"
-	"slices"
 )
 
 // All chirps must be no more than 140 characters long
@@ -89,15 +87,3 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(jsonData))
 }
 
-func cleanBody(str string) string {
-	words := strings.Fields(str)
-	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
-	for i, word := range words {
-		if slices.Contains(profaneWords, strings.ToLower(word)) {
-			words[i] = "****"
-		}
-	}
-
-	newString := strings.Join(words, " ")
-	return newString
-}

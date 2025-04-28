@@ -11,7 +11,8 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	cfg.FileserverHits.Store(0)
-	cfg.DbPtr.Reset(req.Context())
+	cfg.DbPtr.ResetUsers(req.Context())
+	cfg.DbPtr.ResetChirps(req.Context())
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hits reset to 0 and users database returned to initial state."))
+	w.Write([]byte("Hits reset to 0; users and chirps databases returned to initial state."))
 }
