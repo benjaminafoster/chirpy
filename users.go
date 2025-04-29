@@ -2,23 +2,24 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 	"time"
-	"github.com/google/uuid"
 
-	//"github.com/benjaminafoster/chirpy/internal/database"
+	"github.com/benjaminafoster/chirpy/internal/database"
+	"github.com/google/uuid"
+	"github.com/benjaminafoster/chirpy/internal/auth"
 )
 
 /* Accepts a JSON body with the following shape
 	{
-  		"email": "user@example.com"
+  		"email": "user@example.com",
+		"password": "example_password"
 	}
 */
 
 type UserRequestBody struct {
 	Email           string `json:"email"`
+	Password        string `json:"password"`
 }
 
 /* Returns 201 Created if user is successfully created
@@ -36,7 +37,7 @@ type User struct {
 	Email           string    `json:"email"`
 }
 
-
+// post one user
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	// Decode request body
 
@@ -44,30 +45,26 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	reqBody := UserRequestBody{}
 	err := decoder.Decode(&reqBody)
 	if err != nil {
-		log.Printf("error decoding request body: %s", err)
-		jsonData, err := json.Marshal(ErrorResponse{Error:fmt.Sprintf("Error decoding request json: %s", err)})
-		if err != nil {
-			log.Printf("Error marshaling error response: %s", err)
-			return
-		}
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(500)
-		w.Write([]byte(jsonData))
+		respondWithError(w, http.StatusInternalServerError, "Couldn't decode user request", err)
 		return
 	}
 
-	// Create the user in the DB
-	user, err := cfg.DbPtr.CreateUser(r.Context(), reqBody.Email)
+	hashed_pwd, err := auth.HashPassword(reqBody.Password)
 	if err != nil {
-		log.Printf("error adding user to database: %s", err)
-		jsonData, err := json.Marshal(ErrorResponse{Error:fmt.Sprintf("error adding user to database: %s", err)})
-		if err != nil {
-			log.Printf("Error marshaling error response: %s", err)
-			return
-		}
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(500)
-		w.Write([]byte(jsonData))
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password", err)
+		return
+	}
+
+	// Create user parameters
+	params := database.CreateUserParams{
+		Email: reqBody.Email,
+		HashedPassword: hashed_pwd,
+	}
+
+	// Create the user in the DB
+	user, err := cfg.DbPtr.CreateUser(r.Context(), params)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create user in users database", err)
 		return
 	}
 
@@ -78,15 +75,5 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		Email:         user.Email,
 	}
 
-	// Write response headers and encode and response body based on success of user creation
-	jsonData, err := json.Marshal(newUser)
-	if err != nil {
-		log.Printf("Error marshaling user into JSON data: %s", err)
-		w.Header().Add("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(500)
-		return
-	}
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(201)
-	w.Write([]byte(jsonData))
+	respondWithJSON(w, http.StatusCreated, newUser)
 }

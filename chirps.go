@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 	"sort"
-
 	"github.com/benjaminafoster/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -44,6 +43,7 @@ type Chirp struct {
 	UserID    uuid.UUID    `json:"user_id"`
 }
 
+// post one chirp
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	
 	// Decode the json data
@@ -95,6 +95,7 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 
 }
 
+// get all chirps (sorted by created_at)
 func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 	chirpsDB, err := cfg.DbPtr.GetChirps(context.Background())
 	if err != nil {
@@ -119,6 +120,7 @@ func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, chirpsSlice)
 }
 
+// get single chirp
 func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 	chirpString := r.PathValue("chirpID")
 	if chirpString == "" {
@@ -131,14 +133,6 @@ func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Error parsing chirp string into UUID", err)
 		return
 	}
-
-	/* var reqChirp ChirpRequest
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&reqChirp)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Error decoding request", err)
-		return
-	} */
 
 	chirpDb, err := cfg.DbPtr.GetChirpByID(context.Background(), chirpID)
 	if err != nil {
