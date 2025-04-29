@@ -119,6 +119,45 @@ func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, chirpsSlice)
 }
 
+func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
+	chirpString := r.PathValue("chirpID")
+	if chirpString == "" {
+		respondWithError(w, http.StatusInternalServerError, "No chirp ID provided", fmt.Errorf("no chirp ID provided"))
+		return
+	}
+
+	chirpID, err := uuid.Parse(chirpString)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error parsing chirp string into UUID", err)
+		return
+	}
+
+	/* var reqChirp ChirpRequest
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&reqChirp)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error decoding request", err)
+		return
+	} */
+
+	chirpDb, err := cfg.DbPtr.GetChirpByID(context.Background(), chirpID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Chirp not found", err)
+		return
+	}
+
+	chirp := Chirp{
+		ID: chirpDb.ID,
+		CreatedAt: chirpDb.CreatedAt,
+		UpdatedAt: chirpDb.UpdatedAt,
+		Body: chirpDb.Body,
+		UserID: chirpDb.UserID,
+	}
+
+	respondWithJSON(w, http.StatusOK, chirp)
+
+}
+
 
 // Sorting by created_at date for chirps
 type Chirps []Chirp
