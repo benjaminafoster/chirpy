@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"sort"
 
 	"github.com/benjaminafoster/chirpy/internal/database"
 	"github.com/google/uuid"
@@ -89,11 +90,54 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		Body: chirpDb.Body,
 		UserID: chirpDb.UserID,
 	}
-	
+
 	respondWithJSON(w, http.StatusCreated, chirp)
 
 }
 
+func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
+	chirpsDB, err := cfg.DbPtr.GetChirps(context.Background())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve all chirps", err)
+		return
+	}
+
+	chirpsSlice := []Chirp{}
+
+	for _, chirp := range chirpsDB {
+		chirpsSlice = append(chirpsSlice, Chirp{
+			ID: chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body: chirp.Body,
+			UserID: chirp.UserID,
+		})
+	}
+
+	sort.Sort(ByDate{chirpsSlice})
+	
+	respondWithJSON(w, http.StatusOK, chirpsSlice)
+}
+
+
+// Sorting by created_at date for chirps
+type Chirps []Chirp
+
+func (c Chirps) Len() int {
+	return len(c)
+}
+func (c Chirps) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
+}
+
+type ByDate struct {Chirps}
+
+func (s ByDate) Less(i, j int) bool {
+	return s.Chirps[i].CreatedAt.Before(s.Chirps[j].CreatedAt)
+}
+
+
+// Auxiliary function to handle cleaning the body of chirps
 func cleanBody(str string) string {
 	words := strings.Fields(str)
 	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
