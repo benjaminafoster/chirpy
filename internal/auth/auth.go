@@ -7,15 +7,12 @@ import (
 
 func HashPassword(password string) (string, error) {
 	log.Printf("Password: %s", password)
-	/* cost, err := bcrypt.Cost([]byte(password))
-	log.Printf("Cost: %d", cost)
-	if err != nil {
-		return "", err
-	} */
+
 	hashed_pwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
+	
 	log.Printf("Hashed password: %s", hashed_pwd)
 	return string(hashed_pwd), nil
 }
