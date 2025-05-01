@@ -75,14 +75,14 @@ func TestGetBearerToken(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Invalid Token -- Missing token string",
+			name: "Invalid Token -- Insufficient bearer token fields",
 			headers: map[string][]string{"Authorization": []string{"Bearer",}},
 			wantToken: "",
 			wantErr: true,
 		},
 		{
-			name: "Invalid Token -- Missing bearer",
-			headers: map[string][]string{"Authorization": []string{"67890",}},
+			name: "Invalid Token -- 'Bearer' improperly formatted",
+			headers: map[string][]string{"Authorization": []string{"bearer 67890",}},
 			wantToken: "",
 			wantErr: true,
 		},

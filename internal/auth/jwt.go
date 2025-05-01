@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 	"strings"
+	"log"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -68,11 +69,19 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")
 	if authHeader == "" {
+		log.Print("no authorization header provided in JWT")
 		return "", fmt.Errorf("no authorization header present")
 	}
 
 	tokenFields := strings.Fields(authHeader)
+	
 	if len(tokenFields) != 2 {
+		log.Print("authorization header missing component")
+		return "", fmt.Errorf("authorization header must follow convention: 'Bearer <token>'")
+	}
+
+	if tokenFields[0] != "Bearer" {
+		log.Print("'Bearer' missing from authorization header or improperly formatted")
 		return "", fmt.Errorf("authorization header must follow convention: 'Bearer <token>'")
 	}
 
