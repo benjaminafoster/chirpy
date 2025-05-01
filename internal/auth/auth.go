@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"net/http"
+	"strings"
 )
 
 func HashPassword(password string) (string, error) {
@@ -25,3 +28,18 @@ func CheckPasswordHash(storedHash, password string) error {
 
 	return nil
 }
+
+func GetBearerToken(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", fmt.Errorf("no authorization header present")
+	}
+
+	tokenFields := strings.Fields(authHeader)
+	if len(tokenFields) != 2 {
+		return "", fmt.Errorf("authorization header must follow convention: 'Bearer <token>'")
+	}
+
+	return tokenFields[1], nil
+}
+
